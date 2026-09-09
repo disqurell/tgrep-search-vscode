@@ -6,7 +6,6 @@
   "command.rebuild": "tgrep: Build / update index",
   "command.refresh": "tgrep: Check index status",
   "config.executable": "Path to Microsoft tgrep 1.0.5. Supports ~/; searches PATH and ~/.local/bin.",
-  "config.pythonExecutable": "Python 3 for POSIX flock and child process management (macOS/Linux).",
   "config.maxResults": "Maximum number of matching lines or file names.",
   "config.maxOutputMB": "Maximum search output size before stopping the process.",
   "config.externalLockPath": "Shared flock file used by an external updater. Default: <index-name>-update.lock next to the index folder.",

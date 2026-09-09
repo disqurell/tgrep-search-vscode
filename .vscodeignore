@@ -4,6 +4,8 @@
 .git/**
 node_modules/**
 src/**
+native/**
+scripts/**
 test/**
 artifacts/**
 **/__pycache__/**

@@ -1,10 +1,11 @@
+import { runGuard } from './guard';
 import { t, setLanguage, getLanguage, getMessages } from './i18n';
 import * as vscode from 'vscode';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import { createHash, randomBytes } from 'node:crypto';
-import { Binding, Generation, IndexState, Job, Match, Query, contained, runGuard, timeLabel } from './core';
+import { Binding, Generation, IndexState, Job, Match, Query, contained, timeLabel } from './core';
 import { Runtime, inspectIndex, search } from './service';
 
 const expand = (value: string) => value.startsWith('~/') ? path.join(os.homedir(), value.slice(2)) : value;
@@ -93,7 +94,7 @@ class Panel implements vscode.WebviewViewProvider, vscode.Disposable {
         try { await fs.access(candidate, fs.constants.X_OK); executable = candidate; break; } catch { /* try next */ }
       }
     }
-    return { executable, python: expand(this.config().get<string>('pythonExecutable', 'python3')), script: this.context.asAbsolutePath('scripts/guard.py'), externalLock: expand(this.config().get<string>('externalLockPath', '')) };
+    return { executable, helper: this.context.asAbsolutePath('dist/native/guard'), externalLock: expand(this.config().get<string>('externalLockPath', '')) };
   }
   private async setRoot(root: string, save = true): Promise<void> {
     if (this.building) throw new Error(t("Wait for the build to finish or cancel it."));
@@ -291,7 +292,7 @@ class Panel implements vscode.WebviewViewProvider, vscode.Disposable {
       const runtime = await this.runtime();
       await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: t("tgrep: updating index"), cancellable: true }, async (progress, token) => {
         const append = (value: string) => { this.output.append(value); this.post({ type: 'log', text: value.slice(-4000) }); progress.report({ message: value.trim().slice(-160) }); };
-        const job = runGuard(runtime.python, runtime.script, { op: 'build', ...binding, executable: runtime.executable, externalLock: runtime.externalLock }, data => append(data.toString('utf8')), append);
+        const job = runGuard(runtime.helper, { op: 'build', ...binding, executable: runtime.executable, externalLock: runtime.externalLock }, data => append(data.toString('utf8')), append);
         this.buildJob = job;
         const cancel = token.onCancellationRequested(() => job.cancel());
         try {

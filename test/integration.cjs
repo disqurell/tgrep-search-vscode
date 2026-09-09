@@ -3,12 +3,12 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const os = require('node:os');
-const { runGuard } = require('../dist/core');
+const { runGuard } = require('../dist/guard');
 const { search, inspectIndex } = require('../dist/service');
-const runtime = { python: 'python3', script: path.resolve('scripts/guard.py'), executable: process.env.TGREP_EXECUTABLE || path.join(os.homedir(), '.local/bin/tgrep'), externalLock: '', language: 'ru' };
+const runtime = { helper: path.resolve('dist/native/guard'), executable: process.env.TGREP_EXECUTABLE || path.join(os.homedir(), '.local/bin/tgrep'), externalLock: '' };
 const q = (query, extra = {}) => ({ query, regex: false, caseSensitive: true, glob: '', mode: 'content', ...extra });
 async function build(binding, rt = runtime) {
-  return runGuard(rt.python, rt.script, { op: 'build', ...binding, executable: rt.executable, externalLock: rt.externalLock }, () => {}).done;
+  return runGuard(rt.helper, { op: 'build', ...binding, executable: rt.executable, externalLock: rt.externalLock }, () => {}).done;
 }
 test('real tgrep: hidden, Unicode, dash, glob, no matches, errors, limits, receipt and failed rebuild', async () => {
   await fs.mkdir('.scratch', { recursive: true });
@@ -21,12 +21,12 @@ test('real tgrep: hidden, Unicode, dash, glob, no matches, errors, limits, recei
     await fs.writeFile(path.join(binding.root, '.default/config.php'), 'needle🔥\n');
     await fs.writeFile(path.join(binding.root, 'normal.txt'), 'NEEDLE🔥\n' + 'many results\n'.repeat(10000));
     await fs.writeFile(path.join(binding.root, '.git/config'), 'needle🔥');
-    await assert.rejects(search(runtime, { ...binding, index: path.join(temp, 'missing-parent/index') }, q('needle'), 1000, 1024 * 1024).result, /Индекс отсутствует/);
+    await assert.rejects(search(runtime, { ...binding, index: path.join(temp, 'missing-parent/index') }, q('needle'), 1000, 1024 * 1024).result, /Index not found/);
     const started = Date.now();
     assert.equal((await build(binding)).code, 0);
     const state = await inspectIndex(runtime, binding).result;
     assert.equal(state.state, 'ready'); assert.equal(state.timeKind, 'completed');
-    assert.match((await inspectIndex({ ...runtime, language: 'en' }, binding).result).detail, /^Index ready/);
+    assert.match((await inspectIndex(runtime, binding).result).detail, /^Index ready/);
     assert(Date.parse(state.time) >= started);
     const run = query => search(runtime, binding, query, 1000, 8 * 1024 * 1024).result;
     let result = await run(q('needle🔥'));
@@ -44,11 +44,10 @@ test('real tgrep: hidden, Unicode, dash, glob, no matches, errors, limits, recei
     const cancelled = search(runtime, binding, q('many'), 10000, 8 * 1024 * 1024);
     cancelled.job.cancel(); assert((await cancelled.result).cancelled);
     const before = await fs.readFile(path.join(binding.index, '.tgrep-search-completed.json'), 'utf8');
-    const failed = await build(binding, { ...runtime, executable: path.join(temp, 'missing-executable') });
-    assert.notEqual(failed.code, 0);
+    await assert.rejects(build(binding, { ...runtime, executable: path.join(temp, 'missing-executable') }), /Check tgrepSearch.executable/);
     assert.equal(await fs.readFile(path.join(binding.index, '.tgrep-search-completed.json'), 'utf8'), before);
     assert.equal((await inspectIndex(runtime, binding).result).state, 'error');
-    await assert.rejects(run(q('needle')), /не завершена/);
+    await assert.rejects(run(q('needle')), /did not finish/);
     assert.equal((await build(binding)).code, 0);
     assert.equal((await inspectIndex(runtime, binding).result).state, 'ready');
   } finally { await fs.rm(temp, { recursive: true, force: true }); }

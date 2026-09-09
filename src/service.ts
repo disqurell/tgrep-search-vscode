@@ -1,11 +1,12 @@
+import { runGuard } from './guard';
 import { t } from './i18n';
 import * as path from 'node:path';
-import { Binding, IndexState, Job, Match, Query, Records, contained, parseMatch, runGuard, searchArgs } from './core';
+import { Binding, IndexState, Job, Match, Query, Records, contained, parseMatch, searchArgs } from './core';
 
-export interface Runtime { python: string; script: string; executable: string; externalLock: string; language?: string }
+export interface Runtime { helper: string; executable: string; externalLock: string; }
 export function inspectIndex(runtime: Runtime, binding: Binding): { job: Job; result: Promise<IndexState> } {
   let output = '';
-  const job = runGuard(runtime.python, runtime.script, { op: 'status', ...binding, externalLock: runtime.externalLock, ...(runtime.language ? { language: runtime.language } : {}) }, chunk => {
+  const job = runGuard(runtime.helper, { op: 'status', ...binding, externalLock: runtime.externalLock }, chunk => {
     output += chunk.toString('utf8');
     if (output.length > 65536) throw new Error(t("The index status response is too large"));
   });
@@ -33,7 +34,7 @@ export function search(runtime: Runtime, binding: Binding, query: Query, maxResu
     if (match) matches.push(match);
     if (matches.length >= maxResults) job.limit();
   });
-  const job = runGuard(runtime.python, runtime.script, { op: 'search', ...binding, args, executable: runtime.executable, externalLock: runtime.externalLock, ...(runtime.language ? { language: runtime.language } : {}) }, chunk => {
+  const job = runGuard(runtime.helper, { op: 'search', ...binding, args, executable: runtime.executable, externalLock: runtime.externalLock }, chunk => {
     bytes += chunk.length;
     if (bytes > maxBytes) { job.limit(); return; }
     records.write(chunk);

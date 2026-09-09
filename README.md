@@ -6,21 +6,21 @@ A separate VS Code sidebar for indexed **content search** and file-name search w
 
 ## Install
 
-Requirements: VS Code 1.95+, **Microsoft tgrep 1.0.5**, and Python 3 with `fcntl` on macOS or Linux. Tested on macOS arm64. Windows is not supported. The VSIX does not bundle tgrep or Python.
+Requirements: **VS Code 1.95+ and Microsoft tgrep 1.0.5** on **macOS Apple Silicon (arm64)**. Install the extension and tgrep; no separate Python, Node.js, compiler or Homebrew installation is needed to use it. JavaScript runs inside VS Code and the small native lock supervisor is bundled in the VSIX. This release targets `darwin-arm64`; Intel macOS, Linux and Windows packages are not provided.
 
 Use **Extensions: Install from VSIX…**, or run from this repository:
 
 ```sh
-code --install-extension artifacts/tgrep-search-0.1.3.vsix
+code --install-extension artifacts/tgrep-search-0.1.4.vsix
 ```
 
-The extension ID is `local-tools.tgrep-search`. It uses stable VS Code APIs and requires a trusted filesystem workspace. For Remote SSH, install the prerequisites on the Extension Host machine; remote operation has not been tested.
+The extension ID is `local-tools.tgrep-search`. It uses stable VS Code APIs and requires a trusted filesystem workspace. For Remote SSH the Extension Host must match the package platform and have tgrep installed; remote operation has not been tested.
 
-Set `tgrepSearch.executable` if needed. The default searches PATH, then `~/.local/bin/tgrep`; `~/` is expanded for the current user. `tgrepSearch.pythonExecutable` defaults to `python3`. Both settings accept an executable path, not a shell command.
+Set `tgrepSearch.executable` if needed. The default searches PATH, then `~/.local/bin/tgrep`; `~/` is expanded for the current user. The setting accepts an executable path, not a shell command. The old `tgrepSearch.pythonExecutable` setting is no longer used and can be removed.
 
 ## Use
 
-1. Open the tgrep Activity Bar view, or press **Cmd+Alt+F** on macOS / **Ctrl+Alt+F** on Linux.
+1. Open the tgrep Activity Bar view, or press **Cmd+Alt+F** on macOS.
 2. **Choose source folder…** selects the folder to index. **Projects…** selects a workspace root in a multi-root workspace. The active project is explicit and does not change when you switch editors.
 3. Independently **Choose index folder…** to connect an existing index or select an empty directory. The default index location is a unique folder in extension global storage, derived from the canonical source path. Keep the index outside the source folder to avoid indexing the index itself.
 4. Click **Build / update** when you want to create or rebuild the index. Progress, cancellation and a log are available in the panel and the `tgrep Search` output channel.
@@ -49,6 +49,8 @@ Existing indexes are validated using `meta.json.root_path` with symlinks resolve
 - **meta.updated_at; estimated external build completion**: the actual Unix-seconds field from tgrep. In 1.0.5 it is assigned before all sidecar writes complete, so the UI labels it as an estimate. An external generation change invalidates the previous extension receipt.
 - Missing metadata time falls back to an explicitly labelled **meta.json mtime estimate**. Unavailable times are **unknown**. During an error or lock, a previously observed successful update can remain labelled **last known**.
 
+After upgrading from 0.1.3, old completion receipts fall back to a labelled metadata estimate until the next successful extension rebuild. Version 0.1.4 stores nanosecond fingerprints as decimal strings to avoid JavaScript number rounding. An old receipt can still be shown as the last known time during an error.
+
 Status is checked every five seconds and through **Check**, including updates performed outside VS Code. The status bar shows a compact state and time; its tooltip includes full details. Clicking it opens the panel; the adjacent refresh icon starts a rebuild.
 
 ## Hidden files and safe rebuilding
@@ -61,13 +63,13 @@ tgrep index <source> --hidden --exclude .git --index-path <index>
 
 Hidden files and folders are included. Ignore rules retain tgrep's semantics; `--no-ignore` is never added. Outside a Git repository, tgrep may not apply `.gitignore`.
 
-Content search uses `--json --line-buffered`, the selected match options, `--regexp=<query>` and `-- <source>`. All arguments are passed as arrays through `spawn` / `subprocess.Popen`, without a shell. Spaces, Unicode, shell-looking text and leading hyphens remain data.
+Content search uses `--json --line-buffered`, the selected match options, `--regexp=<query>` and `-- <source>`. All arguments are passed as arrays through `spawn` / POSIX `execvp`, without a shell. Spaces, Unicode, shell-looking text and leading hyphens remain data.
 
 Search deliberately does **not** pass `--hidden`: in tgrep 1.0.5 that flag bypasses the prebuilt index. The extension never starts `serve`. It rejects indexes containing `serve.json`, since tgrep would otherwise auto-connect to a server. Stop the server and remove stale server metadata yourself before connecting a disk index.
 
-The Python helper holds shared POSIX flock locks during search and exclusive locks throughout a build. Lock files are adjacent to the index: `<index-name>.tgrep-search.lock` and `<index-name>-update.lock`. Reading requires permission to open/create these lock files. Their presence does not indicate a held lock; the operating-system flock state does. Different indexes can build independently.
+The bundled native supervisor holds shared POSIX `flock` locks during search and exclusive locks throughout a build, including the final validation and completion receipt. Index validation uses the Node.js runtime built into VS Code. The supervisor depends only on the macOS system library; it is not tied to the Node.js ABI. Lock files are adjacent to the index: `<index-name>.tgrep-search.lock` and `<index-name>-update.lock`. Reading requires permission to open/create these lock files. Their presence does not indicate a held lock; the operating-system flock state does. Different indexes can build independently.
 
-An external updater must hold an **exclusive `fcntl.flock` on the same external lock file for the entire `tgrep index` process**. Set `tgrepSearch.externalLockPath` when its lock is elsewhere. No external updater or scheduler is invoked or modified by the extension. A nonblocking updater may skip a run while a search holds the lock.
+An external updater must hold an **exclusive POSIX `flock` on the same external lock file for the entire `tgrep index` process** (including Python updaters that already use `fcntl.flock`). Set `tgrepSearch.externalLockPath` when its lock is elsewhere. No external updater or scheduler is invoked or modified by the extension. A nonblocking updater may skip a run while a search holds the lock.
 
 Before building, `.tgrep-search-building.json` marks the index as unfinished. Failure or cancellation leaves that marker, blocking searches until a successful extension rebuild. The previous successful timestamp is not overwritten. Builds run in place without a backup generation. A nonempty unrelated folder without tgrep metadata cannot be overwritten.
 
@@ -84,6 +86,8 @@ Arbitrary external `tgrep index` processes that ignore the agreed flock cannot b
 
 ## Development and verification
 
+Building from source requires Node.js/npm and Apple Command Line Tools (`clang`) on macOS arm64. These are development requirements only. `npm run compile` builds TypeScript and `native/guard.c`; `npm run package` bundles `dist/native/guard` into a platform-targeted VSIX. Generated binaries remain ignored by Git. No code or runtime is downloaded during extension activation.
+
 ```sh
 npm ci
 npm test
@@ -94,6 +98,8 @@ npm run package
 ```
 
 Tests use temporary corpora under `.scratch`, not external projects. `test:integration` uses `TGREP_EXECUTABLE` or `~/.local/bin/tgrep`. `test:ui` requires Google Chrome and tests real panel HTML/CSS/JS with a simulated VS Code bridge. `test:host` launches the installed VS Code with isolated user data/extensions under `.scratch/host`; `VSCODE_EXECUTABLE` can override the application path. An F5 configuration is provided.
+
+The native tests cover shared/exclusive locks, cancellation, parser failure and forced Extension Host death. A packaged-extension Host run with an empty PATH verifies that Python, Node.js executables and a compiler are not required at runtime. Set `TGREP_TEST_NO_TOOLS=1` to repeat it; only the configured absolute tgrep path and the bundled helper are used.
 
 Native folder-picker dialogs and physical global shortcuts are not automated. The UI tests cover both languages, keyboard submission, accessibility labels, safe rendering, collapsed defaults and live language switching, compact status and state restoration. Extension Host tests cover activation, building, actual search and editor navigation.
 

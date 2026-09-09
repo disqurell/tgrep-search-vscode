@@ -6,7 +6,6 @@
   "command.rebuild": "tgrep: Создать / обновить индекс",
   "command.refresh": "tgrep: Проверить состояние индекса",
   "config.executable": "Путь к Microsoft tgrep 1.0.5. Поддерживается ~/; поиск в PATH и ~/.local/bin.",
-  "config.pythonExecutable": "Python 3 для POSIX flock и управления дочерним процессом (macOS/Linux).",
   "config.maxResults": "Максимум строк с совпадениями или имён файлов.",
   "config.maxOutputMB": "Предельный объём вывода поиска до остановки процесса.",
   "config.externalLockPath": "Общий flock-файл внешнего обновления. По умолчанию: <имя индекса>-update.lock рядом с папкой индекса.",

@@ -4,8 +4,17 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const crypto = require('node:crypto');
 exports.run = async function () {
+  if (process.env.TGREP_TEST_NO_TOOLS === '1') {
+    const emptyPath = path.resolve('.scratch/host/no-tools');
+    await fs.mkdir(emptyPath, { recursive: true });
+    process.env.PATH = emptyPath;
+  }
   const extension = vscode.extensions.getExtension('local-tools.tgrep-search');
   assert(extension, 'extension is discoverable');
+  assert(!Object.hasOwn(extension.packageJSON.contributes.configuration.properties, 'tgrepSearch.pythonExecutable'));
+  if (process.env.TGREP_TEST_NO_TOOLS === '1') {
+    await vscode.workspace.getConfiguration('tgrepSearch').update('executable', process.env.TGREP_EXECUTABLE || path.join(require('node:os').homedir(), '.local/bin/tgrep'), vscode.ConfigurationTarget.Workspace);
+  }
   await extension.activate(); assert(extension.isActive);
   const commands = await vscode.commands.getCommands(true);
   for (const command of ['open', 'selection', 'rebuild', 'refresh']) assert(commands.includes('tgrepSearch.' + command));
@@ -91,5 +100,5 @@ exports.run = async function () {
       assert.equal(await evaluate('document.getElementById("query").value'), 'needle🔥');
     } finally { await config.update('language', originalLanguage, vscode.ConfigurationTarget.Workspace); }
   } finally { await browser.close(); }
-  console.log('HOST PASSED: real webview DOM, search by button, Unicode editor navigation, no matches, collapsed default, live language switch, collapse/expand with date; activation, contributions, webview open, actual build + receipt, selection search, refresh.');
+  console.log('HOST PASSED (empty PATH: ' + (process.env.TGREP_TEST_NO_TOOLS === '1') + '): real webview DOM, search by button, Unicode editor navigation, no matches, collapsed default, live language switch, collapse/expand with date; activation, contributions, webview open, actual build + receipt, selection search, refresh.');
 };

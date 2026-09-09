@@ -1,6 +1,5 @@
 import { t, getLanguage } from './i18n';
 import * as path from 'node:path';
-import { spawn } from 'node:child_process';
 import { StringDecoder } from 'node:string_decoder';
 
 export interface Match { path: string; line: number; text: string; spans: { start: number; end: number }[] }
@@ -80,27 +79,6 @@ export class Records {
 
 export interface ProcessResult { code: number | null; stderr: string; cancelled: boolean; limited: boolean }
 export interface Job { done: Promise<ProcessResult>; cancel(): void; limit(): void }
-export function runGuard(python: string, script: string, request: object, onData: (chunk: Buffer) => void, onLog?: (text: string) => void): Job {
-  const child = spawn(python, [script], { shell: false, detached: process.platform !== 'win32', stdio: ['pipe', 'pipe', 'pipe'] });
-  let cancelled = false, limited = false, stderr = '', failure: Error | undefined, timer: NodeJS.Timeout | undefined;
-  const signal = (sig: NodeJS.Signals) => {
-    try { if (child.pid) process.platform === 'win32' ? child.kill(sig) : process.kill(-child.pid, sig); } catch { /* already exited */ }
-  };
-  const stop = () => { signal('SIGTERM'); timer ??= setTimeout(() => signal('SIGKILL'), 2000); timer.unref(); };
-  const done = new Promise<ProcessResult>((resolve, reject) => {
-    child.on('error', error => { failure = new Error(t('Could not start {0}: {1}. Check tgrepSearch.pythonExecutable.', python, error.message)); });
-    child.stdin.on('error', () => { /* process error/close owns the outcome */ });
-    child.stdout.on('data', (data: Buffer) => { if (!cancelled && !limited && !failure) { try { onData(data); } catch (error) { failure = error as Error; stop(); } } });
-    child.stderr.on('data', (data: Buffer) => { const value = data.toString('utf8'); stderr = (stderr + value).slice(-32768); onLog?.(value); });
-    child.on('close', code => {
-      if (timer) clearTimeout(timer);
-      if (failure) reject(failure); else resolve({ code, stderr: stderr.trim(), cancelled, limited });
-    });
-    child.stdin.write(JSON.stringify({ language: getLanguage(), ...request }) + '\n');
-  });
-  return { done, cancel() { cancelled = true; stop(); }, limit() { limited = true; stop(); } };
-}
-
 export class Generation {
   private value = 0;
   next(): number { return ++this.value; }
