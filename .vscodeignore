@@ -15,3 +15,8 @@ tsconfig.json
 package-lock.json
 .gitignore
 **/.DS_Store
+
+.github/**
+**/*.obj
+**/*.pdb
+**/*.ilk

@@ -2,7 +2,7 @@
   "name": "tgrep-search",
   "displayName": "tgrep Search",
   "description": "%description%",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "publisher": "local-tools",
   "license": "MIT",
   "repository": {
@@ -139,18 +139,20 @@
   },
   "scripts": {
     "compile": "tsc -p . && node scripts/build-native.cjs",
-    "test": "npm run compile && node --test test/*.test.cjs",
+    "test": "npm run compile && npm run test:unit",
     "test:integration": "npm run compile && node --test test/integration.cjs",
     "test:ui": "node test/ui.cjs",
     "test:host": "npm run compile && node test/host.cjs",
-    "vscode:prepublish": "npm run compile",
-    "package": "node scripts/package.cjs"
+    "vscode:prepublish": "tsc -p .",
+    "package": "npm run compile && node scripts/package.cjs",
+    "test:unit": "node --test test/*.test.cjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/vscode": "1.95.0",
     "@vscode/vsce": "^3.0.0",
+    "playwright": "^1.55.0",
     "typescript": "^5.7.0",
-    "playwright": "^1.55.0"
+    "yauzl": "^3.4.0"
   }
 }

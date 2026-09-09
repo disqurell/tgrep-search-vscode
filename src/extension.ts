@@ -1,3 +1,4 @@
+import { helperRelativePath } from './platform';
 import { runGuard } from './guard';
 import { t, setLanguage, getLanguage, getMessages } from './i18n';
 import * as vscode from 'vscode';
@@ -90,11 +91,11 @@ class Panel implements vscode.WebviewViewProvider, vscode.Disposable {
       const paths = (process.env.PATH ?? '').split(path.delimiter).filter(Boolean);
       paths.push(path.join(os.homedir(), '.local', 'bin'));
       for (const dir of paths) {
-        const candidate = path.join(dir, 'tgrep');
+        const candidate = path.join(dir, process.platform === 'win32' ? 'tgrep.exe' : 'tgrep');
         try { await fs.access(candidate, fs.constants.X_OK); executable = candidate; break; } catch { /* try next */ }
       }
     }
-    return { executable, helper: this.context.asAbsolutePath('dist/native/guard'), externalLock: expand(this.config().get<string>('externalLockPath', '')) };
+    return { executable, helper: this.context.asAbsolutePath(helperRelativePath()), externalLock: expand(this.config().get<string>('externalLockPath', '')) };
   }
   private async setRoot(root: string, save = true): Promise<void> {
     if (this.building) throw new Error(t("Wait for the build to finish or cancel it."));

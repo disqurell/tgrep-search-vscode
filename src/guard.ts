@@ -1,3 +1,4 @@
+import { platformTarget } from './platform';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { Binding, Job, ProcessResult, contained } from './core';
@@ -13,7 +14,7 @@ export function runGuard(helper: string, request: Request, onData: (chunk: Buffe
   const outcome = (code: number | null = 130, stderr = ''): ProcessResult => ({ code, stderr, cancelled, limited });
   const done = (async (): Promise<ProcessResult> => {
     try {
-      if (process.platform !== 'darwin' || process.arch !== 'arm64') throw new Error(t('This extension package supports macOS Apple Silicon only.'));
+      platformTarget();
       const root = await canonical(request.root), index = await canonical(request.index);
       const binding = { root, index };
       if (!(await fs.stat(root)).isDirectory()) throw new Error(t('The source folder does not exist'));

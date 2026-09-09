@@ -3,9 +3,11 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const os = require('node:os');
-const { runGuard } = require('../dist/guard');
-const { search, inspectIndex } = require('../dist/service');
-const runtime = { helper: path.resolve('dist/native/guard'), executable: process.env.TGREP_EXECUTABLE || path.join(os.homedir(), '.local/bin/tgrep'), externalLock: '' };
+const extension = process.env.TGREP_PACKAGED_EXTENSION || path.resolve('.');
+const { runGuard } = require(path.join(extension, 'dist/guard'));
+const { search, inspectIndex } = require(path.join(extension, 'dist/service'));
+const downloaded = require('node:fs').existsSync('.scratch/tgrep-path.txt') ? require('node:fs').readFileSync('.scratch/tgrep-path.txt', 'utf8') : undefined;
+const runtime = { helper: path.join(extension, require(path.join(extension, 'dist/platform')).helperRelativePath()), executable: process.env.TGREP_EXECUTABLE || downloaded || path.join(os.homedir(), '.local/bin', process.platform === 'win32' ? 'tgrep.exe' : 'tgrep'), externalLock: '' };
 const q = (query, extra = {}) => ({ query, regex: false, caseSensitive: true, glob: '', mode: 'content', ...extra });
 async function build(binding, rt = runtime) {
   return runGuard(rt.helper, { op: 'build', ...binding, executable: rt.executable, externalLock: rt.externalLock }, () => {}).done;
@@ -14,7 +16,7 @@ test('real tgrep: hidden, Unicode, dash, glob, no matches, errors, limits, recei
   await fs.mkdir('.scratch', { recursive: true });
   const temp = await fs.mkdtemp(path.resolve('.scratch/integration-'));
   try {
-    const binding = { root: path.join(temp, 'source with spaces'), index: path.join(temp, 'index with spaces') };
+    const binding = { root: path.join(temp, 'source with spaces Я'), index: path.join(temp, 'index with spaces') };
     await fs.mkdir(path.join(binding.root, '.default'), { recursive: true });
     await fs.mkdir(path.join(binding.root, '.git'));
     await fs.writeFile(path.join(binding.root, '.settings.php'), 'Я🙂 needle🔥\n-hidden-token\n');

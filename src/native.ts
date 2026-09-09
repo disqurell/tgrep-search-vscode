@@ -16,7 +16,7 @@ export class BusyError extends Error {
 /** Locks stay held until release(), including after the command's stdout ends. */
 export function nativeSession(helper: string, locks: string[], exclusive: boolean, cwd: string, command: string[], onData: (chunk: Buffer) => void, onLog?: (text: string) => void) {
   const child = spawn(helper, [exclusive ? 'exclusive' : 'shared', ...locks, cwd, ...command], {
-    shell: false, detached: true, stdio: ['pipe', 'pipe', 'pipe', 'pipe']
+    shell: false, detached: process.platform !== 'win32', windowsHide: true, stdio: ['pipe', 'pipe', 'pipe', 'pipe']
   });
   const ready = deferred<void>(), exited = deferred<number>(), closed = deferred<void>();
   const out = deferred<void>(), err = deferred<void>();

@@ -19,7 +19,7 @@ test('root binding and symlink aliases are validated', async t => {
   const f = await fixture(t);
   assert.equal((await inspect(f)).state, 'ready');
   assert.equal((await inspect({ ...f, root: f.dir })).state, 'mismatch');
-  const alias = path.join(f.dir, 'alias'); await fs.symlink(f.root, alias); f.meta.root_path = alias; await f.save();
+  const alias = path.join(f.dir, 'alias'); await fs.symlink(f.root, alias, process.platform === 'win32' ? 'junction' : 'dir'); f.meta.root_path = alias; await f.save();
   assert.equal((await inspect(f)).state, 'ready');
 });
 test('incomplete, dirty, server and corrupt indexes are blocked', async t => {

@@ -6,7 +6,7 @@
  */
 #include <sys/file.h>
 #include <sys/wait.h>
-#include <sys/poll.h>
+#include <poll.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <signal.h>

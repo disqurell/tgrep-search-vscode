@@ -2,7 +2,7 @@ require('../dist/i18n').setLanguage('ru');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { parseMatch, Records, searchArgs, Generation, timeLabel } = require('../dist/core');
-const root = '/project with space';
+const root = require('node:path').resolve('project with space');
 function event(text, start, end) { return JSON.stringify({ type: 'match', data: { path: { text: 'x.php' }, line_number: 3, lines: { text: text + '\n' }, submatches: [{ start, end }] } }); }
 test('UTF-8 byte offsets become UTF-16, including emoji before and within match', () => {
   const match = parseMatch(event('Я🙂 needle🔥', 7, 17), root);

@@ -14,7 +14,7 @@ test('English fallback, regional Russian locale, and reordered placeholders', ()
   setLanguage('de'); assert.equal(t('Query'), 'Query');
 });
 test('all extension/helper/webview literal messages have Russian translations', () => {
-  for (const filename of ['src/core.ts', 'src/service.ts', 'src/extension.ts', 'src/guard.ts', 'src/index.ts', 'src/native.ts', 'media/panel.js']) {
+  for (const filename of ['src/core.ts', 'src/service.ts', 'src/extension.ts', 'src/guard.ts', 'src/index.ts', 'src/native.ts', 'src/platform.ts', 'media/panel.js']) {
     const source = fs.readFileSync(path.resolve(filename), 'utf8');
     for (const match of source.matchAll(/\b(?:t|tr)\((['"])((?:\\.|(?!\1)[^\\])*?)\1/g)) {
       const key = match[2].replaceAll('\\n', '\n');

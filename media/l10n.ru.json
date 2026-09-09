@@ -117,7 +117,7 @@
   "Could not start the bundled index helper: {0}. Reinstall the extension.": "Не удалось запустить встроенный помощник индекса: {0}. Переустановите расширение.",
   "Invalid response from the bundled index helper. Reinstall the extension.": "Некорректный ответ встроенного помощника индекса. Переустановите расширение.",
   "Index helper exited with code {0}": "Помощник индекса завершился с кодом {0}",
-  "This extension package supports macOS Apple Silicon only.": "Эта сборка расширения поддерживает только macOS Apple Silicon.",
+  "Unsupported platform: {0}": "Неподдерживаемая платформа: {0}",
   "Index metadata exceeds 1 MiB.": "Метаданные индекса превышают 1 MiB.",
   "Index ready · {0} files": "Индекс есть · {0} файлов",
   "tgrep exited with code {0}": "tgrep завершился с кодом {0}",

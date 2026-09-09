@@ -15,7 +15,10 @@ export async function exists(file: string): Promise<boolean> {
 /** Resolve symlinked ancestors even when the final directory does not exist yet. */
 export async function canonical(file: string): Promise<string> {
   const absolute = path.resolve(file);
-  try { return await fs.realpath(absolute); }
+  try { const real = await fs.realpath(absolute);
+    // tgrep's Rust canonicalize may emit a Windows extended-length prefix.
+    if (process.platform === 'win32' && real.startsWith('\\\\?\\')) return real.startsWith('\\\\?\\UNC\\') ? '\\\\' + real.slice(8) : real.slice(4);
+    return real; }
   catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
     const parent = path.dirname(absolute);

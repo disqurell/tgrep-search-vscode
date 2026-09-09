@@ -6,12 +6,23 @@ A separate VS Code sidebar for indexed **content search** and file-name search w
 
 ## Install
 
-Requirements: **VS Code 1.95+ and Microsoft tgrep 1.0.5** on **macOS Apple Silicon (arm64)**. Install the extension and tgrep; no separate Python, Node.js, compiler or Homebrew installation is needed to use it. JavaScript runs inside VS Code and the small native lock supervisor is bundled in the VSIX. This release targets `darwin-arm64`; Intel macOS, Linux and Windows packages are not provided.
+Requirements: **VS Code 1.95+ and Microsoft tgrep 1.0.5**. Install the extension and tgrep; no separate Python, Node.js, compiler or Homebrew installation is needed to use it. JavaScript runs inside VS Code and the native lock supervisor is bundled in each VSIX.
 
-Use **Extensions: Install from VSIX…**, or run from this repository:
+All builds use the same extension ID and version. Once published to Marketplace, VS Code chooses the matching platform package automatically for installation and updates. GitHub builds alone do not publish to Marketplace.
+
+| System | x64 package target | ARM64 package target |
+| --- | --- | --- |
+| macOS 11+ | `darwin-x64` | `darwin-arm64` |
+| Linux (glibc 2.31+ build baseline) | `linux-x64` | `linux-arm64` |
+| Alpine Linux (musl; static helper) | `alpine-x64` | `alpine-arm64` |
+| Windows 10/11 | `win32-x64` | `win32-arm64` |
+
+The installed VS Code version and tgrep may impose newer OS requirements. 32-bit systems and browser-only VS Code are unsupported. In Remote SSH / WSL / containers, install the package for the **Extension Host** system, not the local desktop. A Windows native extension and a WSL extension use different packages and separate locking protocols.
+
+Use **Extensions: Install from VSIX…** with the matching filename, or run this macOS Apple Silicon example from the repository:
 
 ```sh
-code --install-extension artifacts/tgrep-search-0.1.4.vsix
+code --install-extension artifacts/tgrep-search-0.1.5-darwin-arm64.vsix
 ```
 
 The extension ID is `local-tools.tgrep-search`. It uses stable VS Code APIs and requires a trusted filesystem workspace. For Remote SSH the Extension Host must match the package platform and have tgrep installed; remote operation has not been tested.
@@ -67,9 +78,9 @@ Content search uses `--json --line-buffered`, the selected match options, `--reg
 
 Search deliberately does **not** pass `--hidden`: in tgrep 1.0.5 that flag bypasses the prebuilt index. The extension never starts `serve`. It rejects indexes containing `serve.json`, since tgrep would otherwise auto-connect to a server. Stop the server and remove stale server metadata yourself before connecting a disk index.
 
-The bundled native supervisor holds shared POSIX `flock` locks during search and exclusive locks throughout a build, including the final validation and completion receipt. Index validation uses the Node.js runtime built into VS Code. The supervisor depends only on the macOS system library; it is not tied to the Node.js ABI. Lock files are adjacent to the index: `<index-name>.tgrep-search.lock` and `<index-name>-update.lock`. Reading requires permission to open/create these lock files. Their presence does not indicate a held lock; the operating-system flock state does. Different indexes can build independently.
+On macOS/Linux the bundled native supervisor holds shared POSIX `flock` locks during search and exclusive locks throughout a build, including the final validation and completion receipt. Index validation uses the Node.js runtime built into VS Code. The supervisor is not tied to the Node.js ABI. On Windows it uses `LockFileEx` on byte range `[0,1)` of both lock files, shared for reads and exclusive for builds, with immediate failure on contention. It owns child processes through a kill-on-close Job Object. Lock files are adjacent to the index: `<index-name>.tgrep-search.lock` and `<index-name>-update.lock`. Reading requires permission to open/create these lock files. Their presence does not indicate a held lock; the operating-system flock state does. Different indexes can build independently.
 
-An external updater must hold an **exclusive POSIX `flock` on the same external lock file for the entire `tgrep index` process** (including Python updaters that already use `fcntl.flock`). Set `tgrepSearch.externalLockPath` when its lock is elsewhere. No external updater or scheduler is invoked or modified by the extension. A nonblocking updater may skip a run while a search holds the lock.
+An external updater must hold an **exclusive POSIX `flock` on the same external lock file for the entire `tgrep index` process** (including Python updaters that already use `fcntl.flock`). Set `tgrepSearch.externalLockPath` when its lock is elsewhere. On Windows an external updater must instead use the same `LockFileEx` byte range and hold it throughout indexing. POSIX/WSL flock and native Windows locks are not interchangeable; do not share a writable index across these environments. No external updater or scheduler is invoked or modified by the extension. A nonblocking updater may skip a run while a search holds the lock.
 
 Before building, `.tgrep-search-building.json` marks the index as unfinished. Failure or cancellation leaves that marker, blocking searches until a successful extension rebuild. The previous successful timestamp is not overwritten. Builds run in place without a backup generation. A nonempty unrelated folder without tgrep metadata cannot be overwritten.
 
@@ -80,13 +91,15 @@ Arbitrary external `tgrep index` processes that ignore the agreed flock cannot b
 - Searches read saved files, not unsaved buffers. Newly added or edited files can be missed until the next index update. There is no automatic rebuilding, live server, replacement operation or multiline search.
 - `maxResults` defaults to 1,000 lines/files, up to 10,000. `maxOutputMB` defaults to 8 MiB, up to 32 MiB. Reaching either limit stops the process and marks the results incomplete. A record over 1 MiB produces an error; the preview shows at most 2,000 characters per line.
 - Output is parsed asynchronously and bounded in memory. Results are published after completion or a limit, rather than per row. A newer query rejects late results from older ones.
-- Cancellation terminates the process group, escalating to SIGKILL after two seconds. Extension Host shutdown also ends the child work.
+- On macOS/Linux cancellation terminates the process group, escalating to SIGKILL after two seconds. Windows cancellation terminates the entire Job Object immediately. Extension Host shutdown also ends child work.
 - JSON UTF-8 byte offsets are converted to UTF-16 editor positions. Cyrillic and emoji are tested. Unusual encodings depend on matching decoding in tgrep and VS Code; non-UTF-8 file names are unsupported.
-- Windows, Remote SSH, nonstandard network-filesystem flock behavior and other tgrep versions are untested.
+- Interactive UI checks cover macOS; Windows/Linux backend checks run separately. Remote SSH, nonstandard network-filesystem locks and other tgrep versions are untested.
 
 ## Development and verification
 
-Building from source requires Node.js/npm and Apple Command Line Tools (`clang`) on macOS arm64. These are development requirements only. `npm run compile` builds TypeScript and `native/guard.c`; `npm run package` bundles `dist/native/guard` into a platform-targeted VSIX. Generated binaries remain ignored by Git. No code or runtime is downloaded during extension activation.
+Building from source requires Node.js/npm and a native compiler: Apple Command Line Tools on macOS, a C compiler on Linux, or an MSVC Developer shell on Windows (matching the target CPU). These are development requirements only. `npm run compile` builds TypeScript and the appropriate C helper; `npm run package` includes only that target helper. Generated binaries remain ignored by Git. No code or runtime is downloaded during extension activation.
+
+`.github/workflows/build.yml` builds eight targets on matching CPU runners or Linux containers. Every job runs unit/process tests, downloads official tgrep 1.0.5 with a pinned SHA-256 for integration tests, then extracts and tests the actual VSIX with an empty PATH. Packages are uploaded as Actions artifacts; publication to Marketplace is a separate explicit step. `TGREP_TARGET` selects the target during builds (cross-compiling both macOS architectures is supported). Linux containers use `node:22-bullseye`; Alpine uses `node:22-alpine` and a static helper. Run `node scripts/test-container.cjs linux-arm64` locally with Docker to reproduce a Linux job.
 
 ```sh
 npm ci

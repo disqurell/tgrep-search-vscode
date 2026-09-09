@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.5
+
+- Add platform packages for macOS, Linux, Alpine and Windows, each on x64 and ARM64, under one extension ID.
+- Use LockFileEx, a Job Object and Unicode process arguments on Windows; retain POSIX flock on macOS/Linux.
+- Add an eight-target build workflow and test the extracted VSIX with real tgrep and an empty PATH.
+- Package only the matching helper; preserve executable permissions and exclude development files.
+
 ## 0.1.4
 
 - Remove the separate Python dependency. The extension now needs only VS Code and tgrep on macOS Apple Silicon.

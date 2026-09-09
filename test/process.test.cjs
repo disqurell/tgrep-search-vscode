@@ -4,7 +4,7 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 const { nativeSession, BusyError } = require('../dist/native');
-const helper = path.resolve('dist/native/guard');
+const helper = path.resolve(require('../dist/platform').helperRelativePath());
 async function fixture(t) {
   await fs.mkdir('.scratch', { recursive: true });
   const dir = await fs.mkdtemp(path.resolve('.scratch/process-'));
@@ -32,7 +32,7 @@ test('cancellation kills stubborn child group, waits for close, and releases loc
   let ready; const started = new Promise(resolve => ready = resolve);
   const s = session("process.on('SIGTERM',()=>{}); console.log('ready'); setInterval(()=>{},1000)", true, ready);
   await s.ready; const running = s.run(); await started;
-  s.cancel(); const result = await running; assert.equal(result.code, 137); await s.release();
+  s.cancel(); const result = await running; assert.equal(result.code, process.platform === 'win32' ? 130 : 137); await s.release();
   const next = session('', true); await next.ready; await next.release();
 });
 test('parser error cancels the subprocess and rejects partial success', async t => {
@@ -62,8 +62,10 @@ test('host death kills the child before releasing the exclusive lock', async t =
   const pid = await new Promise((resolve, reject) => { host.stdout.once('data', b => resolve(Number(b.toString().trim()))); host.on('error', reject); });
   assert(pid > 0); host.kill('SIGKILL');
   // The stubborn command stays alive through TERM, so its lock must remain held.
-  await new Promise(resolve => setTimeout(resolve, 150));
-  const blocked = session('', true); await assert.rejects(blocked.ready, BusyError); await blocked.release();
+  if (process.platform !== 'win32') {
+    await new Promise(resolve => setTimeout(resolve, 150));
+    const blocked = session('', true); await assert.rejects(blocked.ready, BusyError); await blocked.release();
+  }
   const deadline = Date.now() + 5000;
   while (true) {
     try { process.kill(pid, 0); } catch (error) { if (error.code === 'ESRCH') break; throw error; }
@@ -82,4 +84,14 @@ test('cancellation during validation retains locks until the host finishes write
     await s.release();
     const available = session('', true); await available.ready; await available.release();
   }
+});
+test('arguments preserve spaces, quotes, trailing slashes, Unicode and shell syntax', async t => {
+  const { dir, locks } = await fixture(t);
+  const args = ['-needle', 'with spaces', 'Я🔥', 'a"b', 'a\\"b', 'ends in \\', '$(touch nope); & %PATH%', ''];
+  let output = '';
+  const s = nativeSession(helper, locks, false, dir,
+    [process.execPath, '-e', 'process.stdout.write(JSON.stringify(process.argv.slice(1)))', '--', ...args],
+    b => output += b.toString('utf8'));
+  await s.ready; const result = await s.run(); await s.release();
+  assert.equal(result.code, 0); assert.deepEqual(JSON.parse(output), args);
 });
