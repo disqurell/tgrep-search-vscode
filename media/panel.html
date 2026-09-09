@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="{{language}}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{csp}}; script-src 'nonce-{{nonce}}';">
+<link rel="stylesheet" href="{{style}}">
+<title>tgrep Search</title>
+</head>
+<body>
+<section class="index-status" aria-label="Index status">
+  <div class="heading">
+    <strong id="settingsHeading" hidden>PROJECT INDEX</strong>
+    <div id="compactStatus" role="status"><span id="indexIcon" aria-hidden="true">⚠</span><span id="compactUpdated">unknown</span></div>
+    <button id="toggleSettings" class="secondary small" aria-expanded="false" aria-controls="indexDetails configuration" aria-label="Expand settings">Settings</button>
+  </div>
+  <div id="indexDetails" hidden>
+  <button id="refresh" class="secondary small" title="Check external index status">Check</button>
+  <div id="state" role="status">Checking…</div>
+  <div class="caption">Last successful update</div>
+  <div id="updated">unknown</div>
+  <div class="caption">Source folder</div>
+  <div id="sourcePath" class="path">not selected</div>
+  <div class="caption">Index folder</div>
+  <div id="indexPath" class="path">not selected</div>
+  </div>
+</section>
+<section id="configuration" class="configuration" aria-label="Folders and indexing" hidden>
+  <div class="actions"><button id="source" class="secondary">Choose source folder…</button><button id="project" class="secondary" title="Select a multi-root workspace folder">Projects…</button></div>
+  <div class="actions"><button id="index" class="secondary">Choose index folder…</button></div>
+  <div class="actions build-actions"><button id="build">Build / update</button><button id="cancelBuild" class="secondary" hidden>Cancel build</button><button id="log" class="secondary">Log</button></div>
+  <pre id="buildLog" aria-label="Recent build messages" hidden></pre>
+</section>
+<form id="searchForm" aria-label="tgrep search">
+  <div class="mode-row"><label for="mode">Search in</label>
+  <select id="mode"><option value="content">File contents</option><option value="files">File names (glob)</option></select></div>
+  <label for="query" id="queryLabel" class="sr-only">Query</label>
+  <input id="query" type="text" autocomplete="off" spellcheck="false" placeholder="Text or regular expression">
+  <div class="options"><label><input id="regex" type="checkbox"> Regex .*</label><label><input id="caseSensitive" type="checkbox" checked> Match case</label></div>
+  <label for="glob">Path filter (glob)</label>
+  <input id="glob" type="text" autocomplete="off" spellcheck="false" placeholder="For example: **/*.php or !**/test/**">
+  <div class="actions"><button id="search" type="submit">Search</button><button id="cancel" type="button" class="secondary" disabled>Stop</button></div>
+  <p class="hint">Contents are read from disk. Rebuild the index after changes. Press Enter to search.</p>
+</form>
+<div id="error" role="alert" hidden></div>
+<div id="summary" role="status" aria-live="polite">Enter a query and press Enter.</div>
+<main id="results" aria-label="Search results"></main>
+<script id="localization" type="application/json" nonce="{{nonce}}">{{localization}}</script>
+<script nonce="{{nonce}}" src="{{script}}"></script>
+</body>
+</html>

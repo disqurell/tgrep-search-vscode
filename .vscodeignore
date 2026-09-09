@@ -1,0 +1,15 @@
+.vscode/**
+.research/**
+.scratch/**
+.git/**
+node_modules/**
+src/**
+test/**
+artifacts/**
+**/__pycache__/**
+**/*.pyc
+**/*.map
+tsconfig.json
+package-lock.json
+.gitignore
+**/.DS_Store

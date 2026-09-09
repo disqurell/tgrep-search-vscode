@@ -1,0 +1,162 @@
+{
+  "name": "tgrep-search",
+  "displayName": "tgrep Search",
+  "description": "%description%",
+  "version": "0.1.3",
+  "publisher": "local-tools",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/disqurell/tgrep-search-vscode.git"
+  },
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "extensionKind": [
+    "workspace"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false
+    },
+    "virtualWorkspaces": {
+      "supported": false
+    }
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "tgrep-search",
+          "title": "tgrep Search",
+          "icon": "media/search.svg"
+        }
+      ]
+    },
+    "views": {
+      "tgrep-search": [
+        {
+          "type": "webview",
+          "id": "tgrepSearch.panel",
+          "name": "%view.name%"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "tgrepSearch.open",
+        "title": "%command.open%"
+      },
+      {
+        "command": "tgrepSearch.selection",
+        "title": "%command.selection%"
+      },
+      {
+        "command": "tgrepSearch.rebuild",
+        "title": "%command.rebuild%"
+      },
+      {
+        "command": "tgrepSearch.refresh",
+        "title": "%command.refresh%"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "tgrepSearch.open",
+        "key": "ctrl+alt+f",
+        "mac": "cmd+alt+f"
+      },
+      {
+        "command": "tgrepSearch.selection",
+        "key": "ctrl+alt+shift+f",
+        "mac": "cmd+alt+shift+f",
+        "when": "editorHasSelection"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "tgrepSearch.selection",
+          "when": "editorHasSelection",
+          "group": "navigation@20"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "tgrep Search",
+      "properties": {
+        "tgrepSearch.executable": {
+          "type": "string",
+          "default": "tgrep",
+          "scope": "machine-overridable",
+          "description": "%config.executable%"
+        },
+        "tgrepSearch.pythonExecutable": {
+          "type": "string",
+          "default": "python3",
+          "scope": "machine-overridable",
+          "description": "%config.pythonExecutable%"
+        },
+        "tgrepSearch.maxResults": {
+          "type": "number",
+          "default": 1000,
+          "minimum": 1,
+          "maximum": 10000,
+          "description": "%config.maxResults%"
+        },
+        "tgrepSearch.maxOutputMB": {
+          "type": "number",
+          "default": 8,
+          "minimum": 1,
+          "maximum": 32,
+          "description": "%config.maxOutputMB%"
+        },
+        "tgrepSearch.externalLockPath": {
+          "type": "string",
+          "default": "",
+          "scope": "resource",
+          "description": "%config.externalLockPath%"
+        },
+        "tgrepSearch.language": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "en",
+            "ru"
+          ],
+          "default": "auto",
+          "scope": "window",
+          "description": "%config.language%",
+          "enumDescriptions": [
+            "%config.language.auto%",
+            "English",
+            "Русский"
+          ]
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p .",
+    "test": "npm run compile && node --test test/*.test.cjs && python3 -m unittest discover -s test -p '*_test.py'",
+    "test:integration": "npm run compile && node --test test/integration.cjs",
+    "test:ui": "node test/ui.cjs",
+    "test:host": "npm run compile && node test/host.cjs",
+    "vscode:prepublish": "npm run compile",
+    "package": "vsce package --no-dependencies --allow-missing-repository -o artifacts/tgrep-search-0.1.3.vsix"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "1.95.0",
+    "@vscode/vsce": "^3.0.0",
+    "typescript": "^5.7.0",
+    "playwright": "^1.55.0"
+  }
+}

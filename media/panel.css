@@ -1,0 +1,90 @@
+:root {
+  color-scheme: light dark;
+  --base: var(--vscode-sideBar-background, #202124);
+  --ink: var(--vscode-foreground, #d4d4d4);
+  --muted: var(--vscode-descriptionForeground, #969ba5);
+  --accent: var(--vscode-focusBorder, #007acc);
+  --edge: color-mix(in srgb, var(--ink) 12%, transparent);
+  --surface: color-mix(in srgb, var(--base) 84%, transparent);
+  --wash: color-mix(in srgb, var(--ink) 4%, transparent);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 12px; color: var(--ink);
+  background: radial-gradient(ellipse at 0 0, color-mix(in srgb, var(--accent) 7%, transparent), transparent 420px), var(--base);
+  font-family: var(--vscode-font-family, sans-serif); font-size: var(--vscode-font-size, 13px); line-height: 1.5;
+}
+.index-status, #searchForm, .configuration {
+  background: linear-gradient(140deg, var(--wash), transparent 70%), var(--surface);
+  border: 1px solid var(--edge); border-radius: 12px;
+  box-shadow: 0 3px 14px #00000008, inset 0 1px 0 color-mix(in srgb, var(--ink) 3%, transparent);
+  backdrop-filter: blur(14px) saturate(105%);
+}
+.index-status { position: sticky; top: 0; z-index: 2; padding: 12px; margin-bottom: 10px; }
+.heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 10px; letter-spacing: 1px; }
+#settingsHeading { color: var(--muted); font-weight: 600; }
+#toggleSettings { flex-shrink: 0; }
+#indexDetails { margin-top: 10px; }
+#compactStatus { display: flex; align-items: center; gap: 7px; min-width: 0; font-size: 11px; font-variant-numeric: tabular-nums; letter-spacing: normal; line-height: 1.4; }
+#indexIcon { font-size: 15px; color: var(--vscode-editorWarning-foreground, #cca700); }
+#compactStatus[data-state="ready"] #indexIcon { color: var(--vscode-testing-iconPassed, #89d185); }
+#compactStatus[data-state="error"] #indexIcon, #compactStatus[data-state="mismatch"] #indexIcon { color: var(--vscode-errorForeground, #f66); }
+.settings-collapsed .index-status { padding: 8px 10px; }
+#state { font-weight: 600; margin: 10px 0; overflow-wrap: anywhere; }
+#state[data-state="ready"] { color: var(--vscode-testing-iconPassed, var(--ink)); }
+#state[data-state="error"], #state[data-state="mismatch"], #error { color: var(--vscode-errorForeground, #f66); }
+.caption { color: var(--muted); font-size: 11px; margin-top: 12px; margin-bottom: 3px; }
+#updated { font-size: 12px; line-height: 1.6; }
+.path { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.configuration { padding: 10px; margin-bottom: 10px; }
+button, input, select { font: inherit; }
+button {
+  padding: 7px 11px; border: 1px solid var(--vscode-button-border, transparent); border-radius: 7px;
+  color: var(--vscode-button-foreground, #fff); background: var(--vscode-button-background, #007acc); cursor: pointer;
+  transition: background-color 120ms, border-color 120ms, box-shadow 120ms;
+}
+button:hover { background: var(--vscode-button-hoverBackground, #1186c6); }
+button.secondary { color: var(--ink); background: var(--wash); border-color: var(--edge); }
+button.secondary:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); border-color: color-mix(in srgb, var(--ink) 24%, transparent); }
+button:disabled { opacity: .45; cursor: default; }
+button.small { padding: 4px 7px; font-size: 11px; }
+#toggleSettings { border-color: transparent; background: transparent; color: var(--muted); }
+#toggleSettings:hover { color: var(--ink); background: var(--wash); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+.configuration > .actions:first-child { margin-top: 0; }
+.build-actions { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--edge); }
+#searchForm { padding: 12px; margin-bottom: 16px; }
+.mode-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.mode-row label { flex-shrink: 0; color: var(--muted); font-size: 11px; }
+.mode-row select { min-width: 0; padding: 4px 6px; font-size: 12px; }
+form > label { display: block; color: var(--muted); font-size: 11px; margin: 14px 0 5px; }
+input[type="text"], select {
+  width: 100%; padding: 8px 10px; border: 1px solid var(--vscode-input-border, var(--edge)); border-radius: 7px;
+  color: var(--vscode-input-foreground, var(--ink)); background: color-mix(in srgb, var(--vscode-input-background, var(--base)) 78%, transparent);
+}
+select option { color: var(--vscode-dropdown-foreground, var(--ink)); background: var(--vscode-dropdown-background, var(--base)); }
+#query { font-size: 14px; padding: 10px; border-color: color-mix(in srgb, var(--accent) 38%, var(--edge)); }
+input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 12%, transparent); }
+input::placeholder { color: var(--vscode-input-placeholderForeground, var(--muted)); }
+.options { display: flex; flex-wrap: wrap; gap: 7px; margin: 10px 0 0; }
+.options label { display: flex; align-items: center; gap: 4px; padding: 4px 7px; border: 1px solid var(--edge); border-radius: 6px; font-size: 11px; cursor: pointer; }
+.options label:has(input:checked) { background: color-mix(in srgb, var(--accent) 9%, transparent); border-color: color-mix(in srgb, var(--accent) 32%, var(--edge)); }
+input[type="checkbox"] { margin: 0; accent-color: var(--accent); }
+#searchForm > .actions { margin-top: 14px; }
+#search { flex: 1; font-weight: 600; }
+.hint { font-size: 10px; color: var(--muted); line-height: 1.6; margin: 12px 0 0; }
+#summary { padding: 0 2px 10px; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+#error { margin: 10px 0; padding: 10px; border-radius: 8px; border: 1px solid var(--vscode-inputValidation-errorBorder, var(--edge)); overflow-wrap: anywhere; }
+#buildLog { max-height: 90px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 11px; }
+details { margin: 0 0 8px; border: 1px solid var(--edge); border-radius: 8px; overflow: hidden; }
+summary { cursor: pointer; overflow-wrap: anywhere; padding: 9px; font-size: 12px; background: var(--wash); }
+.match { display: block; width: 100%; background: transparent; color: var(--ink); border: 0; border-radius: 0; text-align: left; padding: 7px 9px 7px 13px; white-space: pre-wrap; overflow-wrap: anywhere; font-family: var(--vscode-editor-font-family, monospace); font-size: 12px; }
+.match:hover { background: var(--vscode-list-hoverBackground, var(--wash)); }
+.line-number { color: var(--muted); margin-right: 8px; font-variant-numeric: tabular-nums; }
+mark { color: inherit; background: var(--vscode-editor-findMatchHighlightBackground, #9e6a0344); border: 1px solid var(--vscode-editor-findMatchHighlightBorder, transparent); border-radius: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+[hidden] { display: none !important; }
+body.vscode-high-contrast, body.vscode-high-contrast-light { --edge: var(--vscode-contrastBorder, var(--ink)); --surface: var(--base); --wash: transparent; }
+@media (prefers-reduced-transparency: reduce) { .index-status, #searchForm, .configuration { background: var(--base); backdrop-filter: none; } }
+@media (prefers-reduced-motion: reduce) { button { transition: none; } }

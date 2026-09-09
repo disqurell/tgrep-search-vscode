@@ -1,0 +1,24 @@
+# Dependencies and generated builds
+/node_modules/
+/dist/
+/coverage/
+*.tsbuildinfo
+*.vsix
+
+# Local research, test corpora, indexes, profiles, reports and screenshots
+/.research/
+/.scratch/
+/artifacts/
+
+# Python and tool caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.log
+
+# Machine-specific settings and secrets; portable launch/tasks stay versioned
+/.vscode/settings.json
+.env
+.env.*
+!.env.example
+.DS_Store
