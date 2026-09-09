@@ -34,6 +34,7 @@ jobs:
         if: ${{ !matrix.image }}
         with:
           node-version: '22'
+          architecture: ${{ endsWith(matrix.target, 'arm64') && 'arm64' || 'x64' }}
       - name: Configure MSVC
         if: runner.os == 'Windows'
         shell: pwsh

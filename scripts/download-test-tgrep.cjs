@@ -13,7 +13,7 @@ const releases = {
   'linux-x64': ['x86_64-unknown-linux-musl.tar.gz', '072b8b5db49bd76d19d2466c1494e579baf4d8a7c74397c9e54c11018f79d333']
 };
 (async () => {
-  const target = platformTarget().replace('alpine-', 'linux-');
+  const target = (process.argv[2] || platformTarget()).replace('alpine-', 'linux-');
   const [asset, sha] = releases[target];
   const response = await fetch(`https://github.com/microsoft/tgrep/releases/download/v1.0.5/tgrep-v1.0.5-${asset}`);
   if (!response.ok) throw new Error(`Download failed: ${response.status}`);
@@ -26,7 +26,7 @@ const releases = {
     const extracted = spawnSync('tar', ['-xf', archive, '-C', directory], { stdio: 'inherit' });
     if (extracted.error || extracted.status !== 0) throw extracted.error || new Error('Extraction failed');
   }
-  const filename = process.platform === 'win32' ? 'tgrep.exe' : 'tgrep';
+  const filename = target.startsWith('win32-') ? 'tgrep.exe' : 'tgrep';
   const files = fs.readdirSync(directory, { recursive: true });
   const relative = files.find(name => path.basename(name) === filename);
   if (!relative) throw new Error('Archive has no tgrep executable');

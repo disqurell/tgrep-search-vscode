@@ -19,6 +19,8 @@ All builds use the same extension ID and version. Once published to Marketplace,
 
 The installed VS Code version and tgrep may impose newer OS requirements. 32-bit systems and browser-only VS Code are unsupported. In Remote SSH / WSL / containers, install the package for the **Extension Host** system, not the local desktop. A Windows native extension and a WSL extension use different packages and separate locking protocols.
 
+Validation for 0.1.5: macOS ARM64 passes the real VS Code Host test; macOS x64 passes backend/package tests under Rosetta. Linux and Alpine pass backend/package tests on ARM64 and x64 in Docker. Both Windows binaries cross-compile, but native Windows runtime/CI validation is still pending; treat those packages as experimental until the corresponding Actions jobs pass. The workflow builds Windows with MSVC; local preliminary Windows artifacts were built with LLVM-MinGW and use the system UCRT.
+
 Use **Extensions: Install from VSIX…** with the matching filename, or run this macOS Apple Silicon example from the repository:
 
 ```sh
